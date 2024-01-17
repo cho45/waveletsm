@@ -1,0 +1,19 @@
+{
+  "name": "waveletsm",
+  "collaborators": [
+    "cho45 <cho45@lowreal.net>"
+  ],
+  "description": "waveletsm",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "waveletsm_bg.wasm",
+    "waveletsm.js",
+    "waveletsm.d.ts"
+  ],
+  "module": "waveletsm.js",
+  "types": "waveletsm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
