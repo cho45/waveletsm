@@ -1,4 +1,3 @@
-import { default as initWasm, WasmCWT } from "../web/waveletsm.js";
 // import * as Comlink from "https://unpkg.com/comlink/dist/esm/comlink.mjs";
 import * as Comlink from 'https://cdn.jsdelivr.net/npm/comlink@4.4.1/+esm'
 
@@ -54,36 +53,25 @@ function noteNumberToNoteName(noteNumber) {
 
 const MORLET_W = 70;
 const sampleRate = 5000*2;
-const ctx = new OfflineAudioContext(1, sampleRate*10, sampleRate);
+const offlineAudioContext = new OfflineAudioContext(1, sampleRate, sampleRate);
 const input = document.getElementById("file");
 const canvas = document.getElementById("canvas");
 
 async function main() {
 	const worker = new Worker("worker.js", { type: "module" });
-	const obj = Comlink.wrap(worker);
-	console.log(await obj.counter);
-	console.log(obj);
-	await obj.inc();
-	console.log(await obj.counter);
-
-	const a = await initWasm();
-	console.log(a);
-	console.log(WasmCWT);
+	console.log(worker);
+	worker.onerror = function (e) {
+		console.log(e);
+	};
+	const SignalTransformWorker = Comlink.wrap(worker);
+	
 	const startNote = 21;
 	const endNote = 108;
-	const range = endNote - startNote + 1;
-	const widths = new Float32Array(range);
-	for (let i = 0; i < range; i++) {
-		const f = midi_to_freq(i + startNote);
-		const fs = sampleRate;
-		widths[range - i - 1] = MORLET_W * fs / (2.0*f*Math.PI);
-	}
-	console.log(widths);
-
-	const chunkLength = sampleRate * 10;
+	const chunkLength = sampleRate * 20;
 	const resolutionSeconds = 0.01;
 	const resampleRate = Math.round(sampleRate * resolutionSeconds);
 
+	const range = endNote - startNote + 1;
 	const NOTE_HEIGHT = 15;
 
 	{
@@ -114,21 +102,23 @@ async function main() {
 //		console.log(e.offsetx, e.offsety, note, notenumbertonotename(note));
 //	});
 	const im = new ImageData(canvas.width, range);
-
-	const cwt = new WasmCWT(chunkLength, widths, MORLET_W);
-	console.log(cwt);
-
 	async function loadFile() {
 		const file = input.files[0];
+		console.log('loadFile', file);
 
 		const arrayBuffer = await file.arrayBuffer();
-		const buffer = await ctx.decodeAudioData(arrayBuffer);
+		const buffer = await offlineAudioContext.decodeAudioData(arrayBuffer);
 		const samples = buffer.getChannelData(0);
-		
-		const result = new Float32Array(chunkLength * range);
-		const s = samples.subarray(0, chunkLength);
 
-		cwt.cwt(s, result);
+		const signalTransformWorker = await new SignalTransformWorker();
+		await signalTransformWorker.initialize(
+			startNote, endNote, sampleRate, chunkLength
+		);
+		console.log('set samples to worker');
+		await signalTransformWorker.setSamples(Comlink.transfer(samples, [samples.buffer]));
+
+		console.log('get cwt result from worker');
+		const result = await signalTransformWorker.getCwtResult(0);
 
 		let max = 0.0;
 		for (let i = 0; i < result.length; i++) {
