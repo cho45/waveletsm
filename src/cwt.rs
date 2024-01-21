@@ -108,7 +108,7 @@ impl FastCWT {
 
             let start = self.widths_n[width] / 2;
             for i in 0..self.n {
-                result[width * self.n + i] = (computed[start + i] * scale).norm();
+                result[width * self.n + i] = (computed[start + i] * scale / self.widths[width]).norm();
             }
         }
     }

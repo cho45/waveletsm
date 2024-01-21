@@ -32,7 +32,7 @@ class SignalTransformWorker {
 		}
 
 		this.widths = widths;
-		console.log(widths);
+		console.log({widths});
 
 		this.cwt = new WasmCWT(chunkLength, widths, MORLET_W);
 		this.result = new Float32Array(chunkLength * range);
@@ -43,10 +43,21 @@ class SignalTransformWorker {
 		this.samples = samples;
 	}
 
+	getChunkCount() {
+		return Math.ceil(this.samples.length / this.chunkLength);
+	}
+
 	async getCwtResult(chunk) {
 		console.log('cwt', {chunk});
 		const s = this.samples.subarray(chunk * this.chunkLength, (chunk + 1) * this.chunkLength);
-		this.cwt.cwt(s, this.result);
+		if (s.length === this.chunkLength) {
+			this.cwt.cwt(s, this.result);
+		} else {
+			console.log('signal padding', s.length);
+			const tmp = this.result.subarray(0, this.chunkLength).fill(0);
+			tmp.set(s, 0);
+			this.cwt.cwt(tmp, this.result);
+		}
 		return this.result;
 	}
 }

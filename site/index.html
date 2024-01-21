@@ -7,19 +7,26 @@
 		<title></title>
 		<link rev="made" href="mailto:cho45@lowreal.net"/>
 		<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
+
 		<script src="index.js" type="module" defer></script>
+		
 		<style>
-		#index {
+		[ref="canvasIndex"] {
 			position: absolute;
 		}
 		</style>
 	</head>
 	<body>
 		<div id="app">
-			<input type="file" id="file" accept="audio/*"/>
+			<input type="file" ref="inputFile" accept="audio/*"/>
+			{{ hoverNote }} {{ noteNumberToNoteName(hoverNote) }} {{ noteNumberToFreq(hoverNote) }}
+			{{ loading }} {{ progress }} {{ progressTime }}
 			<div style="position: relative">
-				<canvas id="index"></canvas>
-				<canvas id="canvas"></canvas>
+				<canvas style="position: absolute; z-index: 1" ref="canvasIndex"></canvas>
+				<div style="text-wrap: nowrap; width: 100%; overflow: auto; position: relative" ref="graphContainer">
+				</div>
+				<div style="height: 100%; width: 2px; background: #fff; position: absolute; left: 0px; top: 0px; z-index: 2" ref="graphCursor"></div>
+				<div style="height: 10px; width: 100%; background: rgba(255, 255, 255, 0.5); position: absolute; left: 0px; top: 0px; z-index: 2" ref="noteCursor"></div>
 			</div>
 		</div>
 	</body>
